@@ -4,16 +4,15 @@
 
 # VPN instance variables
 # Other instance's IP to ping and route to grab if other node goes down
-EIP="54.154.96.200"
-VPN1_ID="i-c6fc8822"
-VPN2_ID="i-a8cad105"
-LB_RT_ID="rtb-6346ed06"
-NODE_RT_ID="rtb-153a9970"
-REMOTE_SIG_RANGE="212.214.9.128/28"
+EIP=
+VPN1_ID=
+VPN2_ID=
+RT_ID=
+REMOTE_RANGE=
 
 
 # Specify the EC2 region that this will be running in (e.g. https://ec2.us-east-1.amazonaws.com)
-EC2_URL=https://ec2.eu-west-1.amazonaws.com
+EC2_URL=
 
 # Health Check variables
 Num_Pings=3
@@ -66,28 +65,13 @@ EIP_ALLOC=`/opt/aws/bin/ec2-describe-addresses -U $EC2_URL | grep $EIP | awk  '{
 echo `date` "-- Starting VPN monitor"
 echo `date` "-- Assigning EIP to VPN1 ENI-1"
 /opt/aws/bin/ec2-associate-address -a $EIP_ALLOC -n $ENI_VPN1  --allow-reassociation -U $EC2_URL
-echo `date` "-- Adding VPN1 instance to $LB_RT_ID private IP range routes on start"
-echo `date` "-- Adding VPN1 instance to $NODE_RT_ID remote SIGTRAN IP range route on start"
-/opt/aws/bin/ec2-replace-route $NODE_RT_ID -r $REMOTE_SIG_RANGE -n $ENI_VPN1 -U $EC2_URL
+echo `date` "-- Adding VPN1 instance to $RT_ID default on start"
+/opt/aws/bin/ec2-replace-route $RT_ID -r $REMOTE_RANGE -n $ENI_VPN1 -U $EC2_URL
 # If replace-route failed, then the route might not exist and may need to be created instead
 if [ "$?" != "0" ]; then
- /opt/aws/bin/ec2-create-route $NODE_RT_ID -r $REMOTE_SIG_RANGE -n $ENI_VPN1 -U $EC2_URL
+ /opt/aws/bin/ec2-create-route $RT_ID -r $REMOTE_RANGE -n $ENI_VPN1 -U $EC2_URL
 fi
-/opt/aws/bin/ec2-replace-route $LB_RT_ID -r 10.0.0.0/8 -n $ENI_VPN1 -U $EC2_URL
-# If replace-route failed, then the route might not exist and may need to be created instead
-if [ "$?" != "0" ]; then
- /opt/aws/bin/ec2-create-route $LB_RT_ID -r 10.0.0.0/8 -n $ENI_VPN1 -U $EC2_URL
-fi
-/opt/aws/bin/ec2-replace-route $LB_RT_ID -r 172.16.0.0/12 -n $ENI_VPN1 -U $EC2_URL
-# If replace-route failed, then the route might not exist and may need to be created instead
-if [ "$?" != "0" ]; then
- /opt/aws/bin/ec2-create-route $LB_RT_ID -r 172.16.0.0/12 -n $ENI_VPN1 -U $EC2_URL
-fi
-/opt/aws/bin/ec2-replace-route $LB_RT_ID -r 192.168.0.0/16 -n $ENI_VPN1 -U $EC2_URL
-# If replace-route failed, then the route might not exist and may need to be created instead
-if [ "$?" != "0" ]; then
- /opt/aws/bin/ec2-create-route $LB_RT_ID -r 192.168.0.0/16 -n $ENI_VPN1 -U $EC2_URL
-fi
+
 
 while [ . ]; do
  # Check health of VPN1 instance
@@ -103,10 +87,8 @@ while [ . ]; do
  echo `date` "-- VPN1 heartbeat failed, assigning EIP to VPN2 instance ENI-1"
 /opt/aws/bin/ec2-associate-address -a $EIP_ALLOC -n $ENI_VPN2 --allow-reassociation -U $EC2_URL
  echo `date` "-- VPN1 heartbeat failed, VPN2 instance taking over $LB_RT_ID and $NODE_RT_ID routes"
-/opt/aws/bin/ec2-replace-route $NODE_RT_ID -r $REMOTE_SIG_RANGE -n $ENI_VPN2 -U $EC2_URL
-/opt/aws/bin/ec2-replace-route $LB_RT_ID -r 10.0.0.0/8 -n $ENI_VPN2 -U $EC2_URL
-/opt/aws/bin/ec2-replace-route $LB_RT_ID -r 172.16.0.0/12 -n $ENI_VPN2 -U $EC2_URL
-/opt/aws/bin/ec2-replace-route $LB_RT_ID -r 192.168.0.0/16 -n $ENI_VPN2 -U $EC2_URL
+/opt/aws/bin/ec2-replace-route $RT_ID -r $REMOTE_RANGE -n $ENI_VPN2 -U $EC2_URL
+
         WHO_HAS_RT="VPN2"
  fi
  # Check VPN1 state to see if we should stop it or start it again
@@ -141,10 +123,7 @@ fi
  echo `date` "-- VPN2 heartbeat failed, assigning EIP to VPN1 instance ENI-1"
 /opt/aws/bin/ec2-associate-address -a $EIP_ALLOC -n $ENI_VPN1 --allow-reassociation -U $EC2_URL
  echo `date` "-- VPN2 heartbeat failed, VPN1 instance taking over $LB_RT_ID and $NODE_RT_ID routes"
-/opt/aws/bin/ec2-replace-route $NODE_RT_ID -r $REMOTE_SIG_RANGE -n $ENI_VPN1 -U $EC2_URL
-/opt/aws/bin/ec2-replace-route $LB_RT_ID -r 10.0.0.0/8 -n $ENI_VPN1 -U $EC2_URL
-/opt/aws/bin/ec2-replace-route $LB_RT_ID -r 172.16.0.0/12 -n $ENI_VPN1 -U $EC2_URL
-/opt/aws/bin/ec2-replace-route $LB_RT_ID -r 192.168.0.0/16 -n $ENI_VPN1 -U $EC2_URL
+/opt/aws/bin/ec2-replace-route $NODE_RT_ID -r $REMOTE_RANGE -n $ENI_VPN1 -U $EC2_URL
         WHO_HAS_RT="VPN1"
  fi
  # Check VPN2 state to see if we should stop it or start it again

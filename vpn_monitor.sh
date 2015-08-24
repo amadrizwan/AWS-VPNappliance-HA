@@ -48,17 +48,17 @@ WHO_HAS_RT="VPN1"
 # }
 
 # Get VPN1 instance's IP
-VPN1_IP=`/opt/aws/bin/ec2-describe-instances $VPN1_ID -U $EC2_URL | grep PRIVATEIPADDRESS -m 1 | awk '{print $2;}'`
+VPN1_IP=`/opt/aws/bin/ec2-describe-instances $VPN1_ID -U $EC2_URL | grep PRIVATEIPADDRESS -m 1 | awk -F$'\t' '{print $2;}'`
 # Get VPN2 instance's IP
-VPN2_IP=`/opt/aws/bin/ec2-describe-instances $VPN2_ID -U $EC2_URL | grep PRIVATEIPADDRESS -m 1 | awk '{print $2;}'`
+VPN2_IP=`/opt/aws/bin/ec2-describe-instances $VPN2_ID -U $EC2_URL | grep PRIVATEIPADDRESS -m 1 | awk -F$'\t' '{print $2;}'`
 
 # Get ENI ID of VPN1 eth0
-ENI_VPN1=`/opt/aws/bin/ec2-describe-instances $VPN1_ID -U $EC2_URL | grep NIC -m 1 | awk  '{print $2;}'`
+ENI_VPN1=`/opt/aws/bin/ec2-describe-instances $VPN1_ID -U $EC2_URL | grep NIC -m 1 | awk -F$'\t' '{print $2;}'`
 # Get ENI ID of VPN2 eth0
-ENI_VPN2=`/opt/aws/bin/ec2-describe-instances $VPN2_ID -U $EC2_URL | grep NIC -m 1 | awk  '{print $2;}'`
+ENI_VPN2=`/opt/aws/bin/ec2-describe-instances $VPN2_ID -U $EC2_URL | grep NIC -m 1 | awk -F$'\t' '{print $2;}'`
 
 # Get alloc ID for EIP
-EIP_ALLOC=`/opt/aws/bin/ec2-describe-addresses -U $EC2_URL | grep $EIP | awk  '{print $5;}'`
+EIP_ALLOC=`/opt/aws/bin/ec2-describe-addresses -U $EC2_URL | grep $EIP | awk -F$'\t' '{print $5;}'`
 
 ########################  Starting Script #######################
 
@@ -92,7 +92,7 @@ while [ . ]; do
         WHO_HAS_RT="VPN2"
  fi
  # Check VPN1 state to see if we should stop it or start it again
- VPN1_STATE=`/opt/aws/bin/ec2-describe-instances $VPN1_ID -U $EC2_URL | grep INSTANCE | awk '{print $5;}'`
+ VPN1_STATE=`/opt/aws/bin/ec2-describe-instances $VPN1_ID -U $EC2_URL | grep INSTANCE | awk -F$'\t' '{print $6;}'`
  if [ "$VPN1_STATE" == "stopped" ]; then
  echo `date` "-- VPN1 instance stopped, starting it back up"
  /opt/aws/bin/ec2-start-instances $VPN1_ID -U $EC2_URL
@@ -127,7 +127,7 @@ fi
         WHO_HAS_RT="VPN1"
  fi
  # Check VPN2 state to see if we should stop it or start it again
- VPN2_STATE=`/opt/aws/bin/ec2-describe-instances $VPN2_ID -U $EC2_URL | grep INSTANCE | awk '{print $5;}'`
+ VPN2_STATE=`/opt/aws/bin/ec2-describe-instances $VPN2_ID -U $EC2_URL | grep INSTANCE | awk -F$'\t' '{print $6;}'`
  if [ "$VPN2_STATE" == "stopped" ]; then
  echo `date` "-- VPN2 instance stopped, starting it back up"
  /opt/aws/bin/ec2-start-instances $VPN2_ID -U $EC2_URL

@@ -8,7 +8,7 @@ EIP=
 VPN1_ID=
 VPN2_ID=
 RT_ID=
-REMOTE_RANGE=
+REMOTE_RANGE=   #usually 0.0.0.0/0
 
 
 # Specify the EC2 region that this will be running in (e.g. https://ec2.us-east-1.amazonaws.com)
@@ -47,9 +47,9 @@ WHO_HAS_RT="VPN1"
 # ]
 # }
 
-# Get VPN1 instance's IP
+# Get VPN1 instance's primary private IP "eth0"
 VPN1_IP=`/opt/aws/bin/ec2-describe-instances $VPN1_ID -U $EC2_URL | grep PRIVATEIPADDRESS -m 1 | awk -F$'\t' '{print $2;}'`
-# Get VPN2 instance's IP
+# Get VPN2 instance's primary private IP "eth0"
 VPN2_IP=`/opt/aws/bin/ec2-describe-instances $VPN2_ID -U $EC2_URL | grep PRIVATEIPADDRESS -m 1 | awk -F$'\t' '{print $2;}'`
 
 # Get ENI ID of VPN1 eth0

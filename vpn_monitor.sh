@@ -58,9 +58,9 @@ ENI_VPN1_eth0=`/opt/aws/bin/ec2-describe-instances $VPN1_ID -U $EC2_URL | grep N
 ENI_VPN2_eth0=`/opt/aws/bin/ec2-describe-instances $VPN2_ID -U $EC2_URL | grep NIC -m 1 | awk -F$'\t' '{print $2;}'`
 
 # Get ENI ID of VPN1 eth1
-ENI_VPN1_eth1=`/opt/aws/bin/ec2-describe-instances $VPN1_ID -U $EC2_URL | grep NIC -m 2 | tail -1 | awk -F$'\t' '{print $2;}'`
+ENI_VPN1_eth1=`/opt/aws/bin/ec2-describe-instances $VPN1_ID -U $EC2_URL | grep NIC $'NIC\t' | tail -1 | awk -F$'\t' '{print $2;}'`
 # Get ENI ID of VPN2 eth1
-ENI_VPN2_eth1=`/opt/aws/bin/ec2-describe-instances $VPN2_ID -U $EC2_URL | grep NIC -m 2 | tail -1 | awk -F$'\t' '{print $2;}'`
+ENI_VPN2_eth1=`/opt/aws/bin/ec2-describe-instances $VPN2_ID -U $EC2_URL | grep NIC $'NIC\t' | tail -1 | awk -F$'\t' '{print $2;}'`
 
 # Get alloc ID for EIP
 EIP_ALLOC=`/opt/aws/bin/ec2-describe-addresses -U $EC2_URL | grep $EIP | awk -F$'\t' '{print $5;}'`

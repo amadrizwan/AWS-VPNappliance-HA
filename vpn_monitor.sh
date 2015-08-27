@@ -53,9 +53,14 @@ VPN1_IP=`/opt/aws/bin/ec2-describe-instances $VPN1_ID -U $EC2_URL | grep PRIVATE
 VPN2_IP=`/opt/aws/bin/ec2-describe-instances $VPN2_ID -U $EC2_URL | grep PRIVATEIPADDRESS -m 1 | awk -F$'\t' '{print $2;}'`
 
 # Get ENI ID of VPN1 eth0
-ENI_VPN1=`/opt/aws/bin/ec2-describe-instances $VPN1_ID -U $EC2_URL | grep NIC -m 1 | awk -F$'\t' '{print $2;}'`
+ENI_VPN1_eth0=`/opt/aws/bin/ec2-describe-instances $VPN1_ID -U $EC2_URL | grep NIC -m 1 | awk -F$'\t' '{print $2;}'`
 # Get ENI ID of VPN2 eth0
-ENI_VPN2=`/opt/aws/bin/ec2-describe-instances $VPN2_ID -U $EC2_URL | grep NIC -m 1 | awk -F$'\t' '{print $2;}'`
+ENI_VPN2_eth0=`/opt/aws/bin/ec2-describe-instances $VPN2_ID -U $EC2_URL | grep NIC -m 1 | awk -F$'\t' '{print $2;}'`
+
+# Get ENI ID of VPN1 eth1
+ENI_VPN1_eth1=`/opt/aws/bin/ec2-describe-instances $VPN1_ID -U $EC2_URL | grep NIC -m 2 | tail -1 | awk -F$'\t' '{print $2;}'`
+# Get ENI ID of VPN2 eth1
+ENI_VPN2_eth1=`/opt/aws/bin/ec2-describe-instances $VPN2_ID -U $EC2_URL | grep NIC -m 2 | tail -1 | awk -F$'\t' '{print $2;}'`
 
 # Get alloc ID for EIP
 EIP_ALLOC=`/opt/aws/bin/ec2-describe-addresses -U $EC2_URL | grep $EIP | awk -F$'\t' '{print $5;}'`
@@ -64,12 +69,12 @@ EIP_ALLOC=`/opt/aws/bin/ec2-describe-addresses -U $EC2_URL | grep $EIP | awk -F$
 
 echo `date` "-- Starting VPN monitor"
 echo `date` "-- Assigning EIP to VPN1 ENI-1"
-/opt/aws/bin/ec2-associate-address -a $EIP_ALLOC -n $ENI_VPN1  --allow-reassociation -U $EC2_URL
+/opt/aws/bin/ec2-associate-address -a $EIP_ALLOC -n $ENI_VPN1_eth0  --allow-reassociation -U $EC2_URL
 echo `date` "-- Adding VPN1 instance to $RT_ID default on start"
-/opt/aws/bin/ec2-replace-route $RT_ID -r $REMOTE_RANGE -n $ENI_VPN1 -U $EC2_URL
+/opt/aws/bin/ec2-replace-route $RT_ID -r $REMOTE_RANGE -n $ENI_VPN1_eth1 -U $EC2_URL
 # If replace-route failed, then the route might not exist and may need to be created instead
 if [ "$?" != "0" ]; then
- /opt/aws/bin/ec2-create-route $RT_ID -r $REMOTE_RANGE -n $ENI_VPN1 -U $EC2_URL
+ /opt/aws/bin/ec2-create-route $RT_ID -r $REMOTE_RANGE -n $ENI_VPN1_eth1 -U $EC2_URL
 fi
 
 
@@ -85,9 +90,9 @@ while [ . ]; do
  # VPN1 instance is unhealthy, loop while we try to fix it
  if [ "$WHO_HAS_RT" == "VPN1" ]; then
  echo `date` "-- VPN1 heartbeat failed, assigning EIP to VPN2 instance ENI-1"
-/opt/aws/bin/ec2-associate-address -a $EIP_ALLOC -n $ENI_VPN2 --allow-reassociation -U $EC2_URL
+/opt/aws/bin/ec2-associate-address -a $EIP_ALLOC -n $ENI_VPN2_eth0 --allow-reassociation -U $EC2_URL
  echo `date` "-- VPN1 heartbeat failed, VPN2 instance taking over $LB_RT_ID and $NODE_RT_ID routes"
-/opt/aws/bin/ec2-replace-route $RT_ID -r $REMOTE_RANGE -n $ENI_VPN2 -U $EC2_URL
+/opt/aws/bin/ec2-replace-route $RT_ID -r $REMOTE_RANGE -n $ENI_VPN2_eth1 -U $EC2_URL
 
         WHO_HAS_RT="VPN2"
  fi
@@ -121,9 +126,9 @@ fi
  # VPN2 instance is unhealthy, loop while we try to fix it
  if [ "$WHO_HAS_RT" == "VPN2" ]; then
  echo `date` "-- VPN2 heartbeat failed, assigning EIP to VPN1 instance ENI-1"
-/opt/aws/bin/ec2-associate-address -a $EIP_ALLOC -n $ENI_VPN1 --allow-reassociation -U $EC2_URL
+/opt/aws/bin/ec2-associate-address -a $EIP_ALLOC -n $ENI_VPN1_eth0 --allow-reassociation -U $EC2_URL
  echo `date` "-- VPN2 heartbeat failed, VPN1 instance taking over $LB_RT_ID and $NODE_RT_ID routes"
-/opt/aws/bin/ec2-replace-route $NODE_RT_ID -r $REMOTE_RANGE -n $ENI_VPN1 -U $EC2_URL
+/opt/aws/bin/ec2-replace-route $NODE_RT_ID -r $REMOTE_RANGE -n $ENI_VPN1_eth1 -U $EC2_URL
         WHO_HAS_RT="VPN1"
  fi
  # Check VPN2 state to see if we should stop it or start it again

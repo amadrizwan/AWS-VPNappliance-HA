@@ -128,7 +128,7 @@ fi
  echo `date` "-- VPN2 heartbeat failed, assigning EIP to VPN1 instance ENI-1"
 /opt/aws/bin/ec2-associate-address -a $EIP_ALLOC -n $ENI_VPN1_eth0 --allow-reassociation -U $EC2_URL
  echo `date` "-- VPN2 heartbeat failed, VPN1 instance taking over $LB_RT_ID and $NODE_RT_ID routes"
-/opt/aws/bin/ec2-replace-route $NODE_RT_ID -r $REMOTE_RANGE -n $ENI_VPN1_eth1 -U $EC2_URL
+/opt/aws/bin/ec2-replace-route $RT_ID -r $REMOTE_RANGE -n $ENI_VPN1_eth1 -U $EC2_URL
         WHO_HAS_RT="VPN1"
  fi
  # Check VPN2 state to see if we should stop it or start it again
